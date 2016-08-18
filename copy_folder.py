@@ -14,10 +14,13 @@ def recursiveCopyInto(gauth, fID_from, fID_to, maxdepth=float('infinity'), __cur
     print '  ' * __currentDepth + 'Recursively copying "%s" (id: %s)' % (result['title'], result['id'])
     print '  ' * __currentDepth + 'into id: %s' % fID_to
 
-
     # Go through children with pagination
+    page_token = None
     while True:
-        result = gauth.service.files().list(q='"%s" in parents and trashed = false' % fID_from).execute()
+        param = {}
+        if page_token:
+            param['pageToken'] = page_token
+        result = gauth.service.files().list(q='"%s" in parents and trashed = false' % fID_from, **param).execute()
         # Alternative way to get children:
         #   (returns `drive#childReference` instead of `drive#file`)
         # result = gauth.service.children().list(folderId=fID_from).execute()
@@ -63,7 +66,6 @@ def recursiveCopyInto(gauth, fID_from, fID_to, maxdepth=float('infinity'), __cur
                         new_file = gauth.service.files().copy(fileId=child['id'], body=copied_file).execute()
                 else:
                     print 'file "%s" already exists in destination folder "%s"' % (child['title'], fID_to)
-
 
         # Get page
         page_token = result.get('nextPageToken')
